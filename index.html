@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>보상 이의제기 vs 협조장려금 손익분기 계산기</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --line:#dfe5ec;
+    --accent:#1f8f7a;
+    --accent-soft:#eaf7f3;
+    --warn:#b45309;
+    --good:#166534;
+    --bad:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:26px;margin:0 0 8px}
+  .sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 3px 12px rgba(0,0,0,.04);
+  }
+  .card h2{font-size:18px;margin:0 0 14px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .money-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  input[type="number"], select{
+    width:100%;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:16px;
+    background:white;
+  }
+  .stage{
+    display:grid;
+    grid-template-columns:auto 1fr 120px;
+    gap:10px;
+    align-items:center;
+    padding:12px 0;
+    border-top:1px solid var(--line);
+  }
+  .stage:first-of-type{border-top:0}
+  .stage-name{font-weight:700}
+  .stage small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+  .check{
+    width:20px;height:20px;accent-color:var(--accent);
+  }
+  .summary{
+    background:var(--accent-soft);
+    border:1px solid #cfe9e1;
+    border-radius:14px;
+    padding:15px;
+    margin-top:14px;
+  }
+  .summary .big{font-size:24px;font-weight:800;margin-top:4px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .positive{color:var(--good);font-weight:700}
+  .negative{color:var(--bad);font-weight:700}
+  .equal{color:var(--warn);font-weight:700}
+  .break{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+  .metric{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px;
+    background:#fff;
+  }
+  .metric .k{font-size:12px;color:var(--muted)}
+  .metric .v{font-size:20px;font-weight:800;margin-top:5px}
+  .metric .s{font-size:11px;color:var(--muted);margin-top:4px}
+  .deprGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+  @media(max-width:900px){.deprGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:520px){.deprGrid{grid-template-columns:1fr}}
+  .formula{
+    margin-top:12px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.65;
+    background:#fafafa;
+    border-radius:10px;
+    padding:12px;
+  }
+  .full{grid-column:1/-1}
+  @media(max-width:760px){
+    .grid,.money-row,.break{grid-template-columns:1fr}
+    .stage{grid-template-columns:auto 1fr 105px}
+    h1{font-size:22px}
+    th,td{padding:9px 5px;font-size:12px}
+  }
+
+  .mainTabs{
+    display:flex;
+    gap:8px;
+    margin:16px 0 18px;
+    padding:5px;
+    background:#e9eef3;
+    border-radius:13px;
+  }
+  .mainTabBtn{
+    flex:1;
+    border:0;
+    border-radius:10px;
+    padding:11px 12px;
+    background:transparent;
+    color:#52606d;
+    font-size:14px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .mainTabBtn.active{
+    background:#fff;
+    color:#146c5b;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+  }
+  .mainTabPanel{display:none}
+  .mainTabPanel.active{display:block}
+
+  /* 기존 '건축물 보상 방법' 탭 스타일 */
+  .compIntro{font-size:13px;line-height:1.78;color:#344054}
+  .compSectionHead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .compNum{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#2347d9;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+  .compSectionHead h2{margin:0;font-size:17px;line-height:1.4}
+  .principleList{display:grid;gap:10px;margin-top:12px}
+  .principleItem{border:1px solid var(--line);background:#fbfcfe;border-radius:14px;padding:13px}
+  .principleItem .pTitle{font-size:13px;font-weight:900;margin-bottom:5px;color:#1d2939}
+  .principleItem .pText{font-size:12.5px;line-height:1.72;color:#475467}
+  .formulaBox{margin:12px 0;padding:14px;border-radius:14px;background:#eef4ff;border:1px solid #dbe7ff;text-align:center;font-size:13px;line-height:1.7}
+  .formulaBox b{color:#173d9c}
+  .compNote{margin-top:12px;padding:13px;border-radius:13px;background:#fff8e7;border:1px solid #f6df9b;font-size:12.5px;line-height:1.72;color:#5d4a12}
+  .compSubhead{font-size:14px;font-weight:900;margin:16px 0 9px;color:#1d2939}
+  .compChecklist{margin:10px 0 0;padding-left:19px;color:#475467;font-size:12.5px;line-height:1.75}
+  .compChecklist li{margin:4px 0}
+  .refBadge{display:inline-flex;align-items:center;justify-content:center;min-width:50px;height:30px;padding:0 10px;border-radius:999px;background:#eef2ff;color:#2347d9;font-size:12px;font-weight:900}
+  .infoCallout{margin-top:12px;padding:13px;border-radius:13px;font-size:13px;line-height:1.7}
+  .rateLead{margin-top:12px;padding:13px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:12.5px;line-height:1.72;color:#344054}
+  .rateGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+  .rateCard{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}
+  .rateCard .label{font-size:11px;color:#667085;font-weight:800;margin-bottom:5px}
+  .rateCard .value{font-size:20px;line-height:1.25;font-weight:950;color:#173d9c;letter-spacing:-.4px}
+  .rateCard .detail{font-size:11.5px;line-height:1.55;color:#667085;margin-top:6px}
+  .rateArrow{margin:11px 0;text-align:center;font-size:12px;font-weight:900;color:#667085}
+  .rateTableWrap{margin-top:12px;overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .rateTable{width:100%;border-collapse:collapse;min-width:590px;font-size:11.5px}
+  .rateTable th,.rateTable td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;line-height:1.45}
+  .rateTable th{background:#f8fafc;color:#475467;font-weight:900;white-space:nowrap}
+  .rateTable td.num{text-align:right;white-space:nowrap;font-weight:850;color:#1d2939}
+  .rateTable tr:last-child td{border-bottom:0}
+  .sourceBox{margin-top:12px;padding:12px 13px;border-radius:13px;background:#f9fafb;border:1px dashed #cfd6df;font-size:11px;line-height:1.65;color:#667085}
+  .sourceBox a{color:#2347d9;text-decoration:none;font-weight:800}
+  .sourceBox a:hover{text-decoration:underline}
+  #buildingPanel .card{margin-bottom:16px}
+  @media(max-width:760px){
+    .mainTabBtn{font-size:13px;padding:10px 8px}
+    .rateGrid{grid-template-columns:1fr}
+    .rateCard .value{font-size:18px}
+    .rateLead{font-size:12px}
+    .compSectionHead h2{font-size:15px}
+    .principleItem{padding:12px}
+    .principleItem .pText,.compIntro,.compNote,.compChecklist{font-size:12px}
+  }
+
+
+/* ===== 첨부 index.html 스타일 기준 UI 정리 ===== */
+:root{
+  --bg:#f5f7fb;
+  --card:#fff;
+  --text:#172033;
+  --muted:#667085;
+  --line:#e5e7eb;
+  --accent:#2347d9;
+  --soft:#eef2ff;
+  --mint:#087f6b;
+  --mint2:#2FAF8F;
+  --mintSoft:#eef8f5;
+  --blueSoft:#eef4ff;
+  --amberSoft:#fff8e7;
+  --shadow:0 8px 24px rgba(17,24,39,.07);
+}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Segoe UI",sans-serif;
+}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 50px}
+.wrap>h1{
+  text-align:center;
+  font-size:27px;
+  line-height:1.3;
+  margin:0 0 16px;
+  letter-spacing:-.5px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+.grid{display:block}
+.full{grid-column:auto}
+.mainTabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin:0 0 16px;
+  padding:5px;
+  background:#e9edf5;
+  border:1px solid #dfe4ec;
+  border-radius:14px;
+}
+.mainTabBtn{
+  appearance:none;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#667085;
+  padding:11px 10px;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.mainTabBtn.active{
+  background:#fff;
+  color:var(--accent);
+  box-shadow:0 2px 8px rgba(17,24,39,.08);
+}
+.mainTabBtn:focus-visible{
+  outline:3px solid rgba(35,71,217,.18);
+  outline-offset:2px;
+}
+#calculatorPanel>.sub{
+  margin:0 0 14px;
+  padding:13px 14px;
+  border:1px solid #dce4ef;
+  border-radius:14px;
+  background:#f8fafc;
+  color:#475467;
+  font-size:12.5px;
+  line-height:1.7;
+  word-break:keep-all;
+}
+.card h2{
+  margin:0 0 14px;
+  font-size:17px;
+  line-height:1.4;
+  font-weight:950;
+  color:#172033;
+}
+.calcSectionTitle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 12px;
+  font-size:17px;
+  font-weight:950;
+}
+.calcSectionNum{
+  flex:0 0 auto;
+  width:30px;height:30px;
+  border-radius:50%;
+  background:#2347d9;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;
+}
+.compGroup{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:15px;
+  background:#fff;
+}
+.compGroup + .compGroup{margin-top:12px}
+.compGroup.landGroup{background:linear-gradient(135deg,#f8faff 0%,#fff 70%)}
+.compGroup.buildingGroup{background:linear-gradient(135deg,#f3fbf8 0%,#fff 70%)}
+.compGroupHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+.compGroupTitle{
+  margin:0;
+  font-size:15px;
+  line-height:1.4;
+  font-weight:950;
+}
+.compGroupBadge{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.landGroup .compGroupBadge{background:#eef2ff;color:#2347d9}
+.buildingGroup .compGroupBadge{background:#eaf7f4;color:#216c5b}
+.compGroupDesc{
+  margin:4px 0 0;
+  color:#667085;
+  font-size:11px;
+  line-height:1.55;
+}
+.calcGrid2{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.calcField{display:flex;flex-direction:column;gap:6px;min-width:0}
+.calcField label{
+  font-size:11px;
+  font-weight:950;
+  color:#344054;
+}
+.calcField input,.calcField select{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #d0d5dd;
+  border-radius:11px;
+  background:#fff;
+  color:#172033;
+  font:inherit;
+  font-size:12.5px;
+  padding:11px 12px;
+  min-height:42px;
+  outline:none;
+}
+.calcField input:focus,.calcField select:focus{
+  border-color:#2FAF8F;
+  box-shadow:0 0 0 3px rgba(47,175,143,.12);
+}
+.calcField input[readonly]{
+  background:#f8fafc;
+  color:#475467;
+  font-weight:850;
+}
+.calcHint{
+  margin-top:10px;
+  padding:11px 12px;
+  border-radius:12px;
+  background:#f8fafc;
+  border:1px solid #e4e7ec;
+  color:#667085;
+  font-size:10.8px;
+  line-height:1.65;
+  word-break:keep-all;
+}
+.calcHint b{color:#344054}
+.calcHint.warn{background:#fff8e7;border-color:#efdfa9;color:#6b571d}
+.calcHint.mint{background:#eef8f5;border-color:#cae9db;color:#245b47}
+.groupResult{
+  margin-top:12px;
+  border-radius:14px;
+  padding:13px 14px;
+  background:#fff;
+  border:1px solid #dce4ed;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+.groupResult .k{
+  font-size:11px;
+  color:#667085;
+  font-weight:850;
+}
+.groupResult .v{
+  font-size:22px;
+  line-height:1.2;
+  font-weight:950;
+  letter-spacing:-.4px;
+  white-space:nowrap;
+}
+.landGroup .groupResult .v{color:#2347d9}
+.buildingGroup .groupResult .v{color:#087f6b}
+.deprGrid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:10px!important;
+}
+.deprGrid .metric{
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+  min-width:0;
+}
+.deprGrid .metric .k{
+  font-size:9.8px;
+  line-height:1.4;
+  color:#667085;
+  font-weight:850;
+}
+.deprGrid .metric .v{
+  font-size:15px;
+  line-height:1.25;
+  font-weight:950;
+  margin-top:4px;
+  color:#172033;
+  overflow-wrap:anywhere;
+}
+.deprGrid .metric .s{font-size:9.5px;color:#98a2b3;margin-top:3px}
+.baseSummary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin-top:14px;
+}
+.baseSummaryBox{
+  border:1px solid #dce4ed;
+  border-radius:13px;
+  padding:11px 12px;
+  background:#fff;
+  min-width:0;
+}
+.baseSummaryBox .k{
+  font-size:10px;
+  color:#667085;
+  font-weight:850;
+  line-height:1.45;
+  min-height:29px;
+}
+.baseSummaryBox .v{
+  font-size:17px;
+  color:#172033;
+  font-weight:950;
+  margin-top:5px;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+.baseSummaryBox.land .v{color:#2347d9}
+.baseSummaryBox.building .v{color:#087f6b}
+.baseSummaryBox.total{
+  background:#172033;
+  border-color:#172033;
+}
+.baseSummaryBox.total .k{color:#cbd5e1}
+.baseSummaryBox.total .v{color:#fff}
+.stageList{display:grid;gap:8px}
+.stage{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) 102px;
+  gap:10px;
+  align-items:center;
+  padding:11px 12px;
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+  background:#fff;
+}
+.check{width:18px;height:18px;accent-color:#087f6b}
+.stage-name{font-size:12.5px;font-weight:950;color:#1d2939}
+.stage-name small{
+  display:block;
+  margin-top:3px;
+  color:#667085;
+  font-size:10.2px;
+  font-weight:650;
+  line-height:1.45;
+}
+.stage select{
+  width:100%;
+  border:1px solid #d0d5dd;
+  border-radius:10px;
+  padding:9px 8px;
+  background:#fff;
+  color:#172033;
+  font:inherit;
+  font-size:12px;
+  font-weight:850;
+}
+.summary{
+  margin-top:12px;
+  background:#eef8f5;
+  border:1px solid #cae9db;
+  border-radius:14px;
+  padding:13px 14px;
+}
+.summary .big{
+  font-size:22px;
+  line-height:1.25;
+  font-weight:950;
+  margin-top:4px;
+  color:#087f6b;
+}
+.comparisonWrap{display:grid;gap:9px}
+.compareCard{
+  border:1px solid #e4e7ec;
+  border-radius:14px;
+  background:#fff;
+  padding:12px 13px;
+}
+.compareCardHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:9px;
+  margin-bottom:9px;
+  border-bottom:1px solid #eef0f3;
+}
+.compareRate{
+  font-size:13px;
+  font-weight:950;
+  color:#172033;
+}
+.compareDiff{
+  font-size:15px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.compareGrid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.compareCell{
+  min-width:0;
+  border-radius:10px;
+  padding:9px;
+  background:#f8fafc;
+}
+.compareCell .k{
+  font-size:9.5px;
+  line-height:1.4;
+  color:#667085;
+  font-weight:850;
+}
+.compareCell .v{
+  margin-top:3px;
+  font-size:12.5px;
+  line-height:1.35;
+  font-weight:950;
+  color:#172033;
+  overflow-wrap:anywhere;
+}
+.positive{color:#176b5a!important}
+.negative{color:#9b3030!important}
+.equal{color:#805b13!important}
+.advantageGrid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.advantageBox{
+  border:1px solid #dce4ed;
+  border-radius:14px;
+  background:#fff;
+  padding:12px;
+  min-width:0;
+}
+.advantageBox .k{
+  font-size:10px;
+  line-height:1.5;
+  color:#667085;
+  font-weight:850;
+  min-height:31px;
+}
+.advantageBox .v{
+  font-size:17px;
+  line-height:1.25;
+  font-weight:950;
+  color:#172033;
+  margin-top:4px;
+  overflow-wrap:anywhere;
+}
+.advantageBox.focus{
+  background:#eef8f5;
+  border-color:#cae9db;
+}
+.advantageBox.focus .v{color:#087f6b}
+.resultCompareList{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+}
+.resultCompareItem{
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+  background:#f8fafc;
+  padding:10px 11px;
+}
+.resultCompareItem .top{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+}
+.resultCompareItem .rate{
+  font-size:11px;
+  font-weight:950;
+  color:#344054;
+}
+.resultCompareItem .diff{
+  font-size:14px;
+  font-weight:950;
+}
+.resultCompareItem .sub{
+  margin-top:5px;
+  font-size:9.8px;
+  line-height:1.45;
+  color:#667085;
+}
+.formula{
+  margin-top:12px;
+  font-size:10.5px;
+  color:#667085;
+  line-height:1.65;
+  background:#f8fafc;
+  border:1px dashed #d7dde5;
+  border-radius:11px;
+  padding:11px 12px;
+}
+#buildingPanel .card{
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+@media(max-width:560px){
+  .wrap{padding:20px 12px 44px}
+  .wrap>h1{font-size:23px}
+  .mainTabs{gap:5px;padding:4px}
+  .mainTabBtn{padding:10px 5px;font-size:12.5px;line-height:1.25}
+  .card{padding:16px;border-radius:16px}
+  .calcGrid2{grid-template-columns:1fr}
+  .deprGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .baseSummary{grid-template-columns:1fr 1fr}
+  .baseSummaryBox.total{grid-column:1/-1}
+  .stage{grid-template-columns:auto minmax(0,1fr) 88px;padding:10px}
+  .stage-name{font-size:12px}
+  .stage-name small{font-size:9.8px}
+  .compareGrid{grid-template-columns:1fr 1fr}
+  .compareCell:last-child{grid-column:1/-1}
+  .advantageGrid{grid-template-columns:1fr}
+  .advantageBox .k{min-height:0}
+  .resultCompareList{grid-template-columns:1fr 1fr}
+  .groupResult .v{font-size:20px}
+}
+@media(max-width:380px){
+  .deprGrid{grid-template-columns:1fr 1fr}
+  .baseSummary{grid-template-columns:1fr}
+  .baseSummaryBox.total{grid-column:auto}
+  .resultCompareList{grid-template-columns:1fr}
+}
+
+
+.compactCompareWrap{
+  margin-top:4px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+}
+.compactCompare{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:11.2px;
+}
+.compactCompare th,.compactCompare td{
+  padding:9px 6px;
+  border-bottom:1px solid var(--line);
+  text-align:center;
+  vertical-align:middle;
+  line-height:1.35;
+}
+.compactCompare th{
+  background:#f8fafc;
+  color:#475467;
+  font-weight:950;
+  font-size:10.2px;
+}
+.compactCompare tr:last-child td{border-bottom:0}
+.compactCompare th:nth-child(1),.compactCompare td:nth-child(1){width:16%}
+.compactCompare th:nth-child(2),.compactCompare td:nth-child(2){width:21%}
+.compactCompare th:nth-child(3),.compactCompare td:nth-child(3){width:24%}
+.compactCompare th:nth-child(4),.compactCompare td:nth-child(4){width:24%}
+.compactCompare th:nth-child(5),.compactCompare td:nth-child(5){width:15%}
+.compactCompare .money{font-weight:900;color:#172033;white-space:nowrap}
+.compactCompare .diff{font-weight:950;white-space:nowrap}
+.buildingTypeHint{
+  margin-top:7px;
+  padding:10px 11px;
+  border-radius:11px;
+  background:#fff8e7;
+  border:1px solid #efdfa9;
+  color:#6b571d;
+  font-size:10.8px;
+  line-height:1.6;
+  word-break:keep-all;
+}
+@media(max-width:560px){
+  .compactCompare{font-size:10.3px}
+  .compactCompare th,.compactCompare td{padding:8px 4px}
+  .compactCompare th{font-size:9.4px}
+  .compactCompare .money,.compactCompare .diff{font-size:10px}
+}
+
+
+.topIntroBox{
+  margin:-2px 0 10px;
+  padding:13px 14px;
+  border:1px solid #dce4ef;
+  border-radius:14px;
+  background:#f8fafc;
+  color:#344054;
+  font-size:12.5px;
+  line-height:1.72;
+  word-break:keep-all;
+}
+.topIntroBox b{color:#172033}
+.topWarningBox{
+  margin:0 0 16px;
+  padding:12px 13px;
+  border:1px solid #f1b7b7;
+  border-radius:13px;
+  background:#fff4f4;
+  color:#9b3030;
+  font-size:11.5px;
+  line-height:1.65;
+  font-weight:400;
+  word-break:keep-all;
+}
+@media(max-width:560px){
+  .topIntroBox{font-size:11.8px;padding:12px}
+  .topWarningBox{font-size:11px;padding:11px 12px}
+}
+
+
+/* ===== 컴팩트 간격 + 입력창 라이트 스카이블루 ===== */
+.wrap{padding-top:20px;padding-bottom:36px}
+.wrap>h1{margin-bottom:10px}
+.topIntroBox{margin:-1px 0 7px;padding:10px 12px;line-height:1.58}
+.topWarningBox{margin:0 0 11px;padding:9px 11px;line-height:1.5;font-weight:400}
+.mainTabs{margin-bottom:11px;padding:4px;gap:6px}
+.mainTabBtn{padding:9px 8px}
+#calculatorPanel>.sub{margin-bottom:10px;padding:10px 12px;line-height:1.55}
+
+.card{
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:15px;
+}
+.card h2{margin-bottom:10px}
+.calcSectionTitle{margin-bottom:9px;gap:7px}
+.calcSectionNum{width:27px;height:27px;font-size:12.5px}
+.compGroup{padding:12px;border-radius:13px}
+.compGroup + .compGroup{margin-top:9px}
+.compGroupHead{margin-bottom:9px}
+.compGroupDesc{margin-top:2px;line-height:1.4}
+.calcGrid2{gap:8px}
+.calcField{gap:4px}
+.calcField label{font-size:10.5px}
+.calcField input,
+.calcField select,
+.stage select{
+  background:#eef8ff !important;
+  border-color:#cfe4f3 !important;
+}
+.calcField input[readonly]{
+  background:#eaf5fb !important;
+}
+.calcField input:focus,
+.calcField select:focus,
+.stage select:focus{
+  border-color:#7db7d8 !important;
+  box-shadow:0 0 0 3px rgba(125,183,216,.13) !important;
+}
+.calcField input,.calcField select{
+  min-height:39px;
+  padding:9px 10px;
+}
+.buildingTypeHint{margin-top:5px;padding:8px 9px;line-height:1.48}
+.calcHint{margin-top:7px;padding:8px 10px;line-height:1.5}
+.groupResult{margin-top:8px;padding:10px 11px}
+.groupResult .v{font-size:19px}
+.deprGrid{gap:6px;margin-top:8px!important}
+.deprGrid .metric{padding:8px}
+.deprGrid .metric .v{font-size:14px}
+.baseSummary{gap:7px;margin-top:10px}
+.baseSummaryBox{padding:9px 10px}
+.baseSummaryBox .k{min-height:0}
+.baseSummaryBox .v{font-size:15px;margin-top:3px}
+
+.stageList{gap:6px}
+.stage{
+  gap:8px;
+  padding:9px 10px;
+  border-radius:10px;
+}
+.stage-name small{margin-top:2px}
+.summary{margin-top:8px;padding:10px 11px}
+.summary .big{font-size:19px}
+.compactCompareWrap{margin-top:2px}
+.compactCompare th,.compactCompare td{padding:7px 5px}
+.advantageGrid{gap:7px}
+.advantageBox{padding:10px}
+.advantageBox .v{font-size:15px}
+.resultCompareList{gap:6px;margin-top:8px}
+.resultCompareItem{padding:8px 9px}
+.formula{margin-top:8px;padding:8px 10px;line-height:1.5}
+
+#buildingPanel .card{margin-bottom:10px}
+.compIntro{line-height:1.58}
+.principleList{gap:7px;margin-top:8px}
+.principleItem{padding:10px}
+.formulaBox{margin:8px 0;padding:10px;line-height:1.55}
+.compNote{margin-top:8px;padding:10px;line-height:1.55}
+.infoCallout{margin-top:8px;padding:10px;line-height:1.55}
+.rateLead{margin-top:8px;padding:10px;line-height:1.55}
+.rateGrid{gap:7px;margin-top:8px}
+.rateCard{padding:10px}
+.rateArrow{margin:7px 0}
+.rateTableWrap{margin-top:8px}
+.sourceBox{margin-top:8px;padding:9px 10px;line-height:1.5}
+
+@media(max-width:560px){
+  .wrap{padding:16px 10px 34px}
+  .card{padding:12px}
+  .mainTabs{margin-bottom:9px}
+  .topIntroBox{padding:9px 10px}
+  .topWarningBox{padding:8px 10px}
+  .calcGrid2{gap:7px}
+  .calcField input,.calcField select{min-height:38px;padding:8px 9px}
+  .compGroup{padding:10px}
+  .stage{padding:8px 9px}
+  .compactCompare th,.compactCompare td{padding:6px 3px}
+}
+
+
+.stageRateWarning{
+  margin-top:7px;
+  color:#c0392b;
+  font-size:10.8px;
+  line-height:1.55;
+  font-weight:400;
+  background:transparent;
+  border:0;
+  padding:0;
+  word-break:keep-all;
+}
+@media(max-width:560px){
+  .stageRateWarning{font-size:10.5px}
+}
+
+
+.rateBasisBox{
+  margin-top:8px;
+  padding:10px 11px;
+  border:1px solid #dce4ed;
+  border-radius:12px;
+  background:#fbfcfe;
+}
+.rateBasisTitle{
+  font-size:11.5px;
+  line-height:1.4;
+  font-weight:950;
+  color:#172033;
+  margin-bottom:4px;
+}
+.rateBasisLead{
+  font-size:10.5px;
+  line-height:1.55;
+  color:#667085;
+  word-break:keep-all;
+}
+.rateBasisTableWrap{
+  margin-top:7px;
+  overflow:hidden;
+  border:1px solid #e4e7ec;
+  border-radius:10px;
+  background:#fff;
+}
+.rateBasisTable{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:10.3px;
+}
+.rateBasisTable th,.rateBasisTable td{
+  padding:7px 5px;
+  border-bottom:1px solid #e9edf2;
+  text-align:center;
+  line-height:1.35;
+}
+.rateBasisTable th{
+  background:#f3f6fa;
+  color:#475467;
+  font-size:9.7px;
+  font-weight:900;
+}
+.rateBasisTable tr:last-child td{border-bottom:0}
+.rateBasisTable .stageCol{
+  font-weight:900;
+  color:#344054;
+}
+.rateBasisTable .defaultVal{
+  font-weight:950;
+  color:#087f6b;
+  background:#f0faf7;
+}
+.rateBasisTable .noStat{
+  color:#667085;
+  font-size:9.8px;
+}
+.rateBasisFoot{
+  margin-top:6px;
+  font-size:9.8px;
+  line-height:1.5;
+  color:#7b8494;
+  word-break:keep-all;
+}
+@media(max-width:560px){
+  .rateBasisBox{padding:9px}
+  .rateBasisTitle{font-size:11px}
+  .rateBasisLead{font-size:10.1px}
+  .rateBasisTable{font-size:9.8px}
+  .rateBasisTable th,.rateBasisTable td{padding:6px 3px}
+  .rateBasisTable th{font-size:9px}
+  .rateBasisFoot{font-size:9.4px}
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>협조장려금 나에게 유리한가?</h1>
+  <div class="topIntroBox">
+    협조장려금은 <b>토지보상금에는 적용되지 않고 지장물에 대해서만 적용될 예정</b>이라고 하니,
+    전체 보상금에 대해 이의를 제기하는 절차와 비교해서 판단해야 합니다.
+  </div>
+  <div class="topWarningBox">
+    ※ 이 계산기는 결과를 간략하게 추정해보기 위한 것으로 확정값이 아닙니다.
+    모든 의사결정은 본인의 책임하에 이루어집니다.
+  </div>
+
+  <nav class="mainTabs" role="tablist" aria-label="보상 메뉴">
+    <button class="mainTabBtn active" type="button" role="tab" aria-selected="true" aria-controls="calculatorPanel" data-panel="calculatorPanel">계산기</button>
+    <button class="mainTabBtn" type="button" role="tab" aria-selected="false" aria-controls="buildingPanel" data-panel="buildingPanel">건축물보상방법</button>
+  </nav>
+
+  <section id="calculatorPanel" class="mainTabPanel active" role="tabpanel">
+  <div class="sub">
+    선택한 이의 단계의 기대 상승률은 <b>직전 단계에서 상승된 보상금에 다시 적용</b>됩니다.
+    토지보상과 건축물·지장물 보상을 각각 계산한 뒤, 이의절차와 협조장려금 지급 가정을 비교합니다.
+  </div>
+
+  <section class="card">
+    <div class="calcSectionTitle"><span class="calcSectionNum">1</span><span>기본 보상금 입력</span></div>
+
+    <div class="compGroup landGroup">
+      <div class="compGroupHead">
+        <div>
+          <h3 class="compGroupTitle">토지 보상</h3>
+          <p class="compGroupDesc">토지면적과 예상 평당 보상단가로 토지분 보상액을 계산합니다.</p>
+        </div>
+        <span class="compGroupBadge">토지분</span>
+      </div>
+      <div class="calcGrid2">
+        <div class="calcField">
+          <label for="landArea">토지 면적 (평)</label>
+          <input id="landArea" type="number" min="0" step="0.1" value="100">
+        </div>
+        <div class="calcField">
+          <label for="landUnitPrice">예상 토지 보상단가 (평당)</label>
+          <select id="landUnitPrice"></select>
+        </div>
+      </div>
+      <div class="calcHint">
+        토지 보상단가는 그간 확인된 정보를 바탕으로 한 <b>추정 범위</b>이며 실제 감정평가 및 보상 결과와 다를 수 있습니다.
+      </div>
+      <div class="groupResult">
+        <div class="k">예상 토지보상금</div>
+        <div class="v" id="landComp">0.00억원</div>
+      </div>
+    </div>
+
+    <div class="compGroup buildingGroup">
+      <div class="compGroupHead">
+        <div>
+          <h3 class="compGroupTitle">건축물 · 지장물 보상</h3>
+          <p class="compGroupDesc">신축단가에 2027년 3월 기준 감가를 적용하고 기타 지장물을 더해 계산합니다.</p>
+        </div>
+        <span class="compGroupBadge">건축물분</span>
+      </div>
+
+      <div class="calcGrid2">
+        <div class="calcField">
+          <label for="buildingArea">건축물 연면적 (평)</label>
+          <input id="buildingArea" type="number" min="0" step="0.1" value="85">
+        </div>
+        <div class="calcField">
+          <label for="buildingType">건축물 구조 · 유형</label>
+          <select id="buildingType">
+            <option value="680" data-life="50" data-range="45~55년" selected>철근콘크리트조 일반주택 · 2급</option>
+            <option value="623" data-life="50" data-range="45~55년">철근콘크리트조 일반주택 · 3급</option>
+            <option value="1198" data-life="50" data-range="45~55년">RC 고급주택 · 1급 (한국부동산연구원 2024)</option>
+            <option value="1067" data-life="50" data-range="45~55년">RC 고급주택 · 2급 (한국부동산연구원 2024)</option>
+            <option value="496" data-life="45" data-range="40~50년">다가구주택 · 조적조(연와) 3급 (한국부동산원 2024)</option>
+            <option value="custom" data-life="40" data-range="직접 입력">기타 구조 · 직접 입력</option>
+          </select>
+          <div class="buildingTypeHint">
+            일반주택·고급주택·조적조 다가구주택은 위의 확인된 참고값을 선택할 수 있습니다.
+            다만 최근 신축한 고급주택이거나 실제 건축비를 별도로 확인하신 경우에는
+            <b>‘기타 구조 · 직접 입력’</b>을 선택하고 평당 예상 건축비를 직접 입력하세요.
+          </div>
+        </div>
+        <div class="calcField">
+          <label for="buildingUnitPrice">2024년 기준 평당 신축단가 (만원/평)</label>
+          <input id="buildingUnitPrice" type="number" min="0" step="1" value="680">
+        </div>
+        <div class="calcField">
+          <label for="otherFixtures">기타 지장물 예상액 (억원, 선택)</label>
+          <input id="otherFixtures" type="number" min="0" step="0.1" value="0">
+        </div>
+        <div class="calcField">
+          <label for="buildingApprovalDate">건축승인일</label>
+          <input id="buildingApprovalDate" type="date" value="2020-05-01">
+        </div>
+        <div class="calcField">
+          <label for="usefulLife">기준 내용연수 (년)</label>
+          <input id="usefulLife" type="number" min="1" step="1" value="50" readonly>
+        </div>
+      </div>
+
+      <div class="deprGrid">
+        <div class="metric">
+          <div class="k">내용연수 · 참고범위</div>
+          <div class="v" id="lifeDisplay">50년</div>
+          <div class="s" id="lifeRangeDisplay">45~55년</div>
+        </div>
+        <div class="metric">
+          <div class="k">경과연수</div>
+          <div class="v" id="ageDisplay">6.8년</div>
+        </div>
+        <div class="metric">
+          <div class="k">정액법 잔존율</div>
+          <div class="v" id="remainingDisplay">86.3%</div>
+        </div>
+        <div class="metric">
+          <div class="k">감가 전 재조달원가</div>
+          <div class="v" id="replacementCostDisplay">0.00억원</div>
+        </div>
+        <div class="metric">
+          <div class="k">감가 반영 건축물가액</div>
+          <div class="v" id="depreciatedBuildingDisplay">0.00억원</div>
+        </div>
+      </div>
+
+      <div class="calcHint mint">
+        감정평가 기준시점은 <b>2027년 3월</b>로 고정합니다.
+        현재 표시된 신축단가는 <b>2024년 기준 참고값</b>을 이용한 간이 계산용 수치이며,
+        실제 감정평가에서는 구조·급수·마감·설비·관리상태·관찰감가·부대시설 등에 따라 달라질 수 있습니다.<br>
+        <b>2026년판 건물신축단가표는 2026년 11월경 발표·발간 예정</b>이며,
+        한국부동산원은 건물신축단가표를 통상 매년 11~12월 중 공표하므로
+        실제 감정평가 시점에는 최신 단가표를 다시 확인해야 합니다.
+      </div>
+      <div class="groupResult">
+        <div class="k">감가 반영 건축물 · 지장물 예상액</div>
+        <div class="v" id="buildingComp">0.00억원</div>
+      </div>
+    </div>
+
+    <div class="baseSummary">
+      <div class="baseSummaryBox land">
+        <div class="k">토지분</div>
+        <div class="v" id="landCompSummary">0.00억원</div>
+      </div>
+      <div class="baseSummaryBox building">
+        <div class="k">건축물 · 지장물분</div>
+        <div class="v" id="buildingCompSummary">0.00억원</div>
+      </div>
+      <div class="baseSummaryBox total">
+        <div class="k">기본 총보상금</div>
+        <div class="v" id="baseTotal">0.00억원</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="calcSectionTitle"><span class="calcSectionNum">2</span><span>이의제기 단계 선택</span></div>
+    <div class="calcHint" style="margin-top:0">
+      법상 보상금에 대해 <b>수용재결 → 이의재결 → 행정소송</b>의 절차를 거쳐 다툴 수 있습니다.
+      본인이 어느 단계까지 진행할지를 선택하고 단계별 기대 상승률을 입력합니다.
+    </div>
+
+    <div class="stageList" style="margin-top:10px">
+      <div class="stage">
+        <input class="check" id="c1" type="checkbox" checked>
+        <div class="stage-name">수용재결<small>1단계 · 기본 5% · 직접 조정 가능</small></div>
+        <select id="r1"></select>
+      </div>
+      <div class="stage">
+        <input class="check" id="c2" type="checkbox" checked>
+        <div class="stage-name">이의재결<small>2단계 · 기본 2% · 직전 전체 보상액 기준</small></div>
+        <select id="r2"></select>
+      </div>
+      <div class="stage">
+        <input class="check" id="c3" type="checkbox" checked>
+        <div class="stage-name">행정소송<small>3단계 · 기본 1% · 직전 전체 보상액 기준</small></div>
+        <select id="r3"></select>
+      </div>
+    </div>
+
+    <div class="stageRateWarning">
+      단계별 기대 상승률은 비교를 위한 예상값입니다. 실제 증액률은 감정평가 결과, 개별 부동산 특성,
+      주장·입증자료, 재결 및 소송 결과 등에 따라 달라질 수 있습니다.
+    </div>
+
+    <div class="rateBasisBox">
+      <div class="rateBasisTitle">기본 상승률을 5% · 2% · 1%로 설정한 이유</div>
+      <div class="rateBasisLead">
+        중앙토지수용위원회 「2025년 토지수용 업무편람」의 2019~2023년 재결금액 통계를 참고해
+        수용재결과 이의재결의 기본값을 정했습니다. 행정소송은 동일한 방식의 공식 평균 증액률 통계가
+        확인되지 않아 비교를 위한 보수적 가정값을 적용했습니다.
+      </div>
+      <div class="rateBasisTableWrap">
+        <table class="rateBasisTable">
+          <thead>
+            <tr>
+              <th>단계</th>
+              <th>2019~2023 연평균</th>
+              <th>2023년</th>
+              <th>계산기 기본값</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="stageCol">수용재결</td>
+              <td>5.61%</td>
+              <td>4.46%</td>
+              <td class="defaultVal">5%</td>
+            </tr>
+            <tr>
+              <td class="stageCol">이의재결</td>
+              <td>2.30%</td>
+              <td>0.78%</td>
+              <td class="defaultVal">2%</td>
+            </tr>
+            <tr>
+              <td class="stageCol">행정소송</td>
+              <td colspan="2" class="noStat">공식 평균 증액률 통계 미확인</td>
+              <td class="defaultVal">1%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rateBasisFoot">
+        ※ 위 재결 증가율은 개별 사건이 모두 그만큼 오른다는 뜻이 아니라,
+        각 연도의 전체 재결금액을 기준으로 산출된 통계입니다.
+        따라서 5%·2%·1%는 협조장려금과 비교하기 위한 기본 시나리오이며 사용자가 직접 조정할 수 있습니다.
+      </div>
+    </div>
+
+    <div class="summary">
+      <div style="color:var(--muted);font-size:10.8px;font-weight:850">선택한 이의절차 후 예상 총보상금</div>
+      <div class="big" id="appealTotal">0.00억원</div>
+      <div id="appealGain" style="margin-top:4px;font-size:11.5px;line-height:1.5;color:#475467"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="calcSectionTitle"><span class="calcSectionNum">3</span><span>협조장려금 10%~40% 비교</span></div>
+    <div class="compactCompareWrap">
+      <table class="compactCompare" aria-label="협조장려금 비교표">
+        <thead>
+          <tr>
+            <th>장려금률</th>
+            <th>장려금</th>
+            <th>협조 선택 총액</th>
+            <th>이의 선택 총액</th>
+            <th>이의제기시</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="calcSectionTitle"><span class="calcSectionNum">4</span><span>무엇이 유리한가</span></div>
+
+    <div class="advantageGrid">
+      <div class="advantageBox">
+        <div class="k" id="appealAssumptionLabel">이의절차(3단계) 진행 가정</div>
+        <div class="v" id="appealGainBreak">0.00억원</div>
+      </div>
+      <div class="advantageBox">
+        <div class="k">협조장려금(40%) 지급 가정</div>
+        <div class="v" id="incentive40Break">0.00억원</div>
+      </div>
+      <div class="advantageBox focus">
+        <div class="k">협조장려금(40%) 지급과 비교</div>
+        <div class="v" id="breakGap40">0억</div>
+      </div>
+    </div>
+
+    <div class="resultCompareList" id="resultCompareCards"></div>
+    <table style="display:none"><tbody id="breakEvenMoneyBody"></tbody></table>
+
+    <div class="summary" style="margin-top:12px">
+      <div style="font-size:10.8px;color:var(--muted);font-weight:850">40% 협조장려금과 비교한 현재 결과</div>
+      <div class="big" id="finalVerdict"></div>
+      <div id="finalDetail" style="font-size:11.5px;margin-top:5px;line-height:1.6;color:#475467"></div>
+    </div>
+
+    <div class="formula">
+      예상 토지보상금 = 토지면적 × 예상 평당 보상단가<br>
+      감가 반영 건축물가액 = 재조달원가 × (1 − 경과연수 ÷ 내용연수)<br>
+      건축물·지장물 예상액 = 감가 반영 건축물가액 + 기타 지장물 예상액<br>
+      이의절차 예상액 = 기본 총보상금 × 선택한 단계별 (1 + 기대상승률)의 곱<br>
+      협조장려금 = 건축물·지장물 예상액 × 협조장려금률
+    </div>
+  </section>
+</section>
+
+<section id="buildingPanel" class="mainTabPanel" role="tabpanel">
+    <div class="card" style="">
+<div class="compSectionHead">
+<div class="compNum">1</div>
+<h2>건축물 보상 기본 원칙</h2>
+</div>
+<div class="compIntro">
+    공공사업으로 건축물이 철거되는 경우 건축물 보상은 단순히 과거에 실제로 지출한 건축비를 돌려받는 방식이 아닙니다.
+    보상평가 시점에서 해당 건축물을 다시 조달·건축하는 데 필요한 비용과 건축물의 현재 상태 등을 종합적으로 고려하여 평가합니다.
+  </div>
+<div class="principleList">
+<div class="principleItem">
+<div class="pTitle">① 토지와 건축물은 원칙적으로 각각 평가</div>
+<div class="pText">토지와 건축물은 서로 다른 평가기준이 적용되므로 토지보상금과 건축물 보상금은 구분하여 검토하는 것이 기본입니다.</div>
+</div>
+<div class="principleItem">
+<div class="pTitle">② 철거되는 건축물은 건축물의 현재 가치가 핵심</div>
+<div class="pText">일반적인 주택처럼 이전이 사실상 어렵고 철거가 불가피한 경우에는 건축물 자체의 가격을 중심으로 보상평가가 이루어집니다.</div>
+</div>
+<div class="principleItem">
+<div class="pTitle">③ 건축물 가격평가의 기본은 원가법</div>
+<div class="pText">구조·면적·마감·설비·건물 상태 등을 고려해 현재 같은 수준의 건축물을 다시 조달하는 데 필요한 비용을 산정하고, 여기에 감가수정을 반영하는 방식이 기본입니다.</div>
+</div>
+</div>
+<div class="formulaBox">
+<b>현재 같은 수준의 건축물을 다시 짓는 데 필요한 비용</b><br/>
+    − 현재까지 발생한 감가<br/>
+    = <b>현재 건축물의 평가가치</b>
+</div>
+<div class="principleList">
+<div class="principleItem">
+<div class="pTitle">④ 핵심은 ‘현재 재조달원가’를 제대로 설명하는 것</div>
+<div class="pText">건축 당시 실제 공사비도 참고자료가 되지만, 보상평가 시점에 동일하거나 유사한 구조·품질·성능으로 다시 건축할 때 필요한 비용을 객관적으로 설명하는 자료가 중요합니다.</div>
+</div>
+<div class="principleItem">
+<div class="pTitle">⑤ 재조달원가가 높아도 감가수정이 반영</div>
+<div class="pText">경과연수뿐 아니라 건축물의 물리적 상태, 기능적 상태, 관리상태 등도 평가에 영향을 줄 수 있습니다. 따라서 같은 연식이라도 실제 상태와 사양에 따라 결과가 달라질 수 있습니다.</div>
+</div>
+<div class="principleItem">
+<div class="pTitle">⑥ 주민이 준비한 자료는 평가의 중요한 기초자료</div>
+<div class="pText">견적서가 곧바로 보상금으로 인정되는 것은 아니지만, 실제 건축 수준을 보여주는 자료가 부족하면 일반적인 표준 수준을 중심으로 판단될 수 있으므로 필요한 자료를 사전에 정리하는 것이 좋습니다.</div>
+<ul class="compChecklist">
+<li>건축 당시 공사계약서·견적서·정산자료</li>
+<li>설계도면·구조도·시방서</li>
+<li>주요 자재·마감재·창호·설비 내역</li>
+<li>조경·담장·대문·옹벽 등 부대시설 자료</li>
+<li>공사사진 및 현재 건축물 사진</li>
+<li>필요한 경우 현재 시점의 재조달원가 견적자료</li>
+</ul>
+</div>
+<div class="principleItem">
+<div class="pTitle">⑦ 모든 주택에 똑같은 정밀 견적서가 필요한 것은 아님</div>
+<div class="pText">신축에 가깝거나 고급 마감·특수설계·고가설비가 있는 건물은 준비 실익이 큰 반면, 노후도가 높고 잔존가치가 낮은 건물은 정밀 견적서의 비용 대비 효과를 먼저 따져볼 필요가 있습니다.</div>
+</div>
+</div>
+<div class="compNote">
+<b>기본방향</b><br/>
+    건축물 보상은 “얼마를 들여 지었는가”만을 주장하는 것이 아니라, <b>현재 같은 건축물을 다시 짓는 데 얼마가 필요한지</b>와 <b>현재 건축물에 어느 정도의 가치가 남아 있는지</b>를 객관적인 자료로 설명하는 과정입니다.
+  </div>
+</div>
+<div class="card" style="border-left:4px solid #6b7cff;">
+<div class="compSectionHead">
+<div class="refBadge">참고</div>
+<h2>한국부동산원 「건물신축단가표」 이해하기</h2>
+</div>
+<div class="compIntro">
+    건물신축단가표는 단독주택을 하나의 평균단가로만 평가하는 자료가 아닙니다. <b>용도·구조·지붕형태·급수</b> 등에 따라 세부 유형이 나뉘며, 실제 보상평가에서는 대상 주택과 가장 유사한 유형을 참고한 뒤 시공수준·마감·설비 등을 함께 살펴 재조달원가를 결정합니다.
+  </div>
+<div class="infoCallout" style="background:#f7f8ff;border:1px solid #dfe3ff;margin-top:14px;">
+<b>왜 주민들에게 ‘건물신축단가표’를 안내하나요?</b><br/><br/>
+    건축물 보상에서 중요한 출발점은 <b>현재 같은 수준의 건물을 다시 짓는 데 필요한 비용, 즉 재조달원가</b>를 합리적으로 파악하는 것입니다.
+    한국부동산원의 「건물신축단가표」는 감정평가 실무에서 건축물의 <b>용도·구조·급수 등에 따른 신축가격 수준을 확인할 때 참고하는 대표적인 가격자료</b>이므로, 주민이 자신의 건물이 어떤 기준과 비교될 수 있는지 이해하는 데 도움이 됩니다.<br/><br/>
+    다만 이 표의 금액이 <b>그대로 우리 집 보상금이 되는 것은 아닙니다.</b> 실제 평가는 건물의 경과연수와 상태에 따른 감가, 실제 시공수준, 마감재·창호·냉난방·전기·기계설비, 특수공사와 부대시설 등을 함께 고려합니다.<br/><br/>
+    따라서 이 자료를 보는 목적은 <b>“평당 얼마를 받는다”는 금액을 미리 정하기 위해서가 아니라</b>, ① 우리 건물이 일반적인 표준주택과 어느 정도 차이가 있는지, ② 일반 단가만으로 실제 건축 수준이 충분히 설명되는지, ③ 별도의 <b>현재 시점 건축 견적서·공사내역·자재자료</b>를 준비할 필요가 있는지를 판단하기 위해서입니다.
+  </div>
+<div class="infoCallout" style="background:#fff8e8;border:1px solid #f2d59a;margin-top:14px;">
+<b>새정이마을은 왜 지금부터 확인해야 하나요?</b><br/><br/>
+    새정이마을의 건축물 보상 감정평가는 <b>2027년 상반기</b>에 진행될 가능성이 있는 것으로 예상하고 있습니다. 한국부동산원은 매년 건물신축단가표를 개정·발간해 왔고, <b>2026년도 건물신축단가표도 2026년 11월 전후 발간될 가능성</b>이 있습니다.<br/><br/>
+    따라서 실제 감정평가가 2027년 상반기에 이루어진다면, 평가시점에 가장 가까운 최신 자료인 <b>「2026년도 건물신축단가표」가 재조달원가 산정의 주요 참고자료로 활용될 가능성이 높습니다.</b> 다만 감정평가사는 단가표의 숫자를 기계적으로 그대로 적용하는 것이 아니라, 대상 건축물의 구조·급수·마감·설비·시공수준과 평가시점의 가격수준을 종합적으로 판단합니다.<br/><br/>
+    지금 공개되어 있는 2024·2025년 자료를 살펴보는 목적은 <b>향후 적용단가를 미리 확정하기 위해서가 아니라</b>, 구조와 급수에 따라 단가 차이가 얼마나 발생하는지 이해하고, 2026년판이 발간되었을 때 우리 집에 해당하는 유형을 바로 확인하여 필요한 재조달원가 견적서와 증빙자료를 준비하기 위해서입니다.
+  </div>
+<div class="rateLead">
+<b>현재 확인 가능한 최신 발간본은 한국부동산원 「2025년도 건물신축단가표」입니다.</b><br/>
+    2025년 11월 발간됐으며, 건물표준단가 432종과 부대설비 보정단가 49종을 수록합니다. 한국감정평가사협회 검색화면에서도 단독주택은 일반주택·고급주택 등으로 구분되고, 철근콘크리트조도 슬래브지붕과 슬래브 위 아스팔트슁글 등 여러 유형으로 세분되어 있습니다.<br/><br/>
+<span style="font-size:12px;color:#667085;">※ 2026년도 건물신축단가표는 아직 발간 전이므로, 본 페이지의 현재 단가 예시는 구조별 차이를 이해하기 위한 참고자료입니다. 2026년판 발간 후 최신 수치로 다시 확인할 필요가 있습니다.</span>
+</div>
+<div class="compSubhead">실제 공개 감정평가서에서 확인되는 단가 예시</div>
+<div class="rateGrid">
+<div class="rateCard">
+<div class="label">한국부동산원 2024 · 일반주택 RC 2급</div>
+<div class="value">약 680만원/평</div>
+<div class="detail">2,057,000원/㎡ · 철근콘크리트조 · 슬래브 위 아스팔트슁글 · 내용연수 50년(45~55년)</div>
+</div>
+<div class="rateCard">
+<div class="label">한국부동산원 2024 · 일반주택 RC 3급</div>
+<div class="value">약 623만원/평</div>
+<div class="detail">1,885,000원/㎡ · 철근콘크리트조 · 슬래브 위 아스팔트슁글 · 내용연수 50년(45~55년)</div>
+</div>
+</div>
+<div class="rateArrow">일반주택 평균 하나로 끝내지 않고 → 구조·급수·시공수준을 추가 확인</div>
+<div class="rateGrid">
+<div class="rateCard">
+<div class="label">고급주택 RC 비교 참고 · 1급</div>
+<div class="value">약 1,198만원/평</div>
+<div class="detail">3,624,000원/㎡ · 철근콘크리트조 평지붕 · 내용연수 50년(45~55년) · 한국부동산연구원 2024 재조달원가 자료</div>
+</div>
+<div class="rateCard">
+<div class="label">고급주택 RC 비교 참고 · 2급</div>
+<div class="value">약 1,067만원/평</div>
+<div class="detail">3,229,000원/㎡ · 철근콘크리트조 평지붕 · 내용연수 50년(45~55년) · 한국부동산연구원 2024 재조달원가 자료</div>
+</div>
+</div>
+<div class="rateTableWrap">
+<table aria-label="건물신축단가 비교 예시" class="rateTable">
+<thead><tr><th>자료</th><th>구분</th><th>구조</th><th>급수</th><th>원/㎡</th><th>평당 환산</th></tr></thead>
+<tbody>
+<tr><td>한국부동산원 2024</td><td>일반주택</td><td>RC·슬래브 위 아스팔트슁글</td><td>2급</td><td class="num">2,057,000</td><td class="num">약 680만원</td></tr>
+<tr><td>한국부동산원 2024</td><td>일반주택</td><td>RC·슬래브 위 아스팔트슁글</td><td>3급</td><td class="num">1,885,000</td><td class="num">약 623만원</td></tr>
+<tr><td>한국부동산연구원 2024</td><td>고급주택</td><td>RC·평지붕</td><td>1급</td><td class="num">3,624,000</td><td class="num">약 1,198만원</td></tr>
+<tr><td>한국부동산연구원 2024</td><td>고급주택</td><td>RC·평지붕</td><td>2급</td><td class="num">3,229,000</td><td class="num">약 1,067만원</td></tr>
+</tbody>
+</table>
+</div>
+<div class="compNote">
+<b>새정이마을에서의 의미</b><br/>
+    최근 신축된 철근콘크리트 주택이나 고급 마감·특수설계·고가설비가 적용된 주택은 단순한 “단독주택 평균단가”만으로 실제 건축 수준을 설명하기 어렵습니다. 특히 일반 RC 표준유형보다 실제 시공비가 현저히 높은 주택은 <b>해당 구조·급수의 표준단가와 현재 재조달 견적을 함께 제시</b>하는 것이 중요합니다.
+  </div>
+<div class="sourceBox">
+<b>자료 기준</b><br/>
+    · 한국부동산원 「2025년도 건물신축단가표」 발간·수록내용: <a href="https://www.reb.or.kr/reb/na/ntt/selectNttInfo.do?mi=9565&amp;nttSn=109176" rel="noopener" target="_blank">한국부동산원 공식 보도자료</a><br/>
+    · 단독주택 세부 유형 분류: <a href="https://member.kapanet.or.kr/buildprice/" rel="noopener" target="_blank">한국감정평가사협회 건물신축단가표 검색</a><br/>
+    · 위 일반주택 RC 금액은 공개된 감정평가서가 인용한 <b>한국부동산원 2024년판</b>의 확인 가능한 사례이며, 2025년판 또는 향후 2026년판의 동일 세부유형 금액으로 표시한 것이 아닙니다.<br/>
+    · 고급주택 RC 1·2급 금액은 공개 감정평가서에 함께 제시된 <b>한국부동산연구원 2024년 건축물 재조달원가 자료</b>로, 한국부동산원 단가와는 별도 자료입니다.<br/>
+    · 새정이마을의 실제 건축물 보상 감정평가가 2027년 상반기에 진행될 경우에는 <b>평가시점의 최신 건물신축단가표와 가격자료를 다시 확인</b>하여 적용 여부를 판단해야 합니다.<br/>
+    · 평당 금액은 1㎡ = 0.3025평(1평 = 3.305785㎡) 기준 단순 환산값입니다.<br/>· 현재 표시 단가는 2024년 기준 참고값이며, 2026년판 건물신축단가표는 2026년 11월경 발표·발간 예정입니다. 실제 감정평가 시점에는 최신 단가표를 다시 확인해야 합니다.
+  </div>
+</div>
+  </section>
+
+</div>
+<script>
+document.querySelectorAll('.mainTabBtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mainTabBtn').forEach(b=>{
+      b.classList.remove('active');
+      b.setAttribute('aria-selected','false');
+    });
+    document.querySelectorAll('.mainTabPanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
+    const panel=document.getElementById(btn.dataset.panel);
+    if(panel) panel.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+
+function fillSelect(id, selected=5){
+  const el=document.getElementById(id);
+  for(let x=1; x<=10.0001; x+=0.5){
+    const opt=document.createElement('option');
+    opt.value=x.toFixed(1);
+    opt.textContent=x.toFixed(1).replace('.0','')+'%';
+    if(Math.abs(x-selected)<0.001) opt.selected=true;
+    el.appendChild(opt);
+  }
+}
+function fillLandUnitPrice(){
+  const el=document.getElementById('landUnitPrice');
+  for(let price=3700; price<=4300; price+=100){
+    const opt=document.createElement('option');
+    opt.value=price;
+    opt.textContent=price.toLocaleString('ko-KR')+'만원/평';
+    if(price===3700) opt.selected=true;
+    el.appendChild(opt);
+  }
+}
+fillLandUnitPrice();
+fillSelect('r1',5); fillSelect('r2',2); fillSelect('r3',1);
+
+function money(v){
+  return Number(v).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})+'억원';
+}
+function pct(v){
+  return Number(v).toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+}
+function signedEok(v){
+  const n=Math.round(Number(v)*10)/10;
+  if(Math.abs(n)<0.05) return '0억';
+  return (n>0?'+':'')+n.toLocaleString('ko-KR',{minimumFractionDigits:0,maximumFractionDigits:1})+'억';
+}
+
+
+const buildingTypeEl = document.getElementById('buildingType');
+const buildingUnitPriceEl = document.getElementById('buildingUnitPrice');
+const usefulLifeEl = document.getElementById('usefulLife');
+
+function syncBuildingInputs(){
+  if(!buildingTypeEl || !buildingUnitPriceEl || !usefulLifeEl) return;
+  const opt=buildingTypeEl.options[buildingTypeEl.selectedIndex];
+  const isCustom=buildingTypeEl.value === 'custom';
+
+  if(isCustom){
+    buildingUnitPriceEl.readOnly = false;
+    buildingUnitPriceEl.style.background = '#fff';
+    usefulLifeEl.readOnly = false;
+    usefulLifeEl.style.background = '#fff';
+  }else{
+    buildingUnitPriceEl.value = buildingTypeEl.value;
+    buildingUnitPriceEl.readOnly = true;
+    buildingUnitPriceEl.style.background = '#f8fafc';
+    usefulLifeEl.value = opt.dataset.life || 50;
+    usefulLifeEl.readOnly = true;
+    usefulLifeEl.style.background = '#f8fafc';
+  }
+}
+
+if(buildingTypeEl){
+  buildingTypeEl.addEventListener('change',()=>{
+    syncBuildingInputs();
+    calc();
+  });
+}
+syncBuildingInputs();
+
+function calc(){
+  const area=Math.max(0,parseFloat(document.getElementById('landArea').value)||0);
+  const unitPrice=Math.max(0,parseFloat(document.getElementById('landUnitPrice').value)||0); // 만원/평
+  const L=area*unitPrice/10000; // 억원
+  const buildingArea=Math.max(0,parseFloat(document.getElementById('buildingArea').value)||0);
+  const buildingUnitPrice=Math.max(0,parseFloat(document.getElementById('buildingUnitPrice').value)||0); // 만원/평
+  const otherFixtures=Math.max(0,parseFloat(document.getElementById('otherFixtures').value)||0); // 억원
+  const usefulLife=Math.max(1,parseFloat(document.getElementById('usefulLife').value)||1);
+
+  // 감정평가 기준시점: 2027년 3월 1일
+  const valuationDate=new Date(2027,2,1);
+  const approvalValue=document.getElementById('buildingApprovalDate').value;
+  let ageYears=0;
+  if(approvalValue){
+    const approvalDate=new Date(approvalValue+'T00:00:00');
+    let months=(valuationDate.getFullYear()-approvalDate.getFullYear())*12 +
+               (valuationDate.getMonth()-approvalDate.getMonth());
+    if(valuationDate.getDate() < approvalDate.getDate()) months-=1;
+    ageYears=Math.max(0,months/12);
+  }
+
+  const replacementCost=buildingArea*buildingUnitPrice/10000; // 억원
+  const depreciationRate=Math.min(1,ageYears/usefulLife);
+  const remainingRate=Math.max(0,1-depreciationRate);
+  const depreciatedBuilding=replacementCost*remainingRate;
+  const B=depreciatedBuilding+otherFixtures;
+  const base=L+B;
+
+  let factor=1;
+  const stages=[
+    ['c1','r1'],['c2','r2'],['c3','r3']
+  ];
+  stages.forEach(([c,r])=>{
+    if(document.getElementById(c).checked){
+      factor *= 1 + (parseFloat(document.getElementById(r).value)||0)/100;
+    }
+  });
+
+  const appealTotal=base*factor;
+  const appealGain=appealTotal-base;
+  const cum=(factor-1)*100;
+  const selectedStageCount=['c1','c2','c3']
+    .filter(id=>document.getElementById(id).checked).length;
+  const appealAssumptionLabel=document.getElementById('appealAssumptionLabel');
+  if(appealAssumptionLabel){
+    appealAssumptionLabel.textContent=
+      selectedStageCount > 0
+        ? `이의절차(${selectedStageCount}단계) 진행 가정`
+        : '이의절차 미진행 가정';
+  }
+
+  const selectedBuildingOpt=buildingTypeEl.options[buildingTypeEl.selectedIndex];
+  const rangeText=buildingTypeEl.value==='custom'
+    ? '직접 입력'
+    : (selectedBuildingOpt.dataset.range || '');
+  document.getElementById('lifeDisplay').textContent=usefulLife.toLocaleString('ko-KR',{maximumFractionDigits:1})+'년';
+  document.getElementById('lifeRangeDisplay').textContent=rangeText;
+  document.getElementById('ageDisplay').textContent=approvalValue
+    ? ageYears.toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1})+'년'
+    : '승인일 입력 필요';
+  document.getElementById('remainingDisplay').textContent=approvalValue
+    ? (remainingRate*100).toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'
+    : '-';
+  document.getElementById('replacementCostDisplay').textContent=money(replacementCost);
+  document.getElementById('depreciatedBuildingDisplay').textContent=approvalValue
+    ? money(depreciatedBuilding)
+    : '승인일 입력 필요';
+
+  document.getElementById('landComp').textContent=money(L);
+  document.getElementById('buildingComp').textContent=money(B);
+  const landCompSummary=document.getElementById('landCompSummary');
+  const buildingCompSummary=document.getElementById('buildingCompSummary');
+  if(landCompSummary) landCompSummary.textContent=money(L);
+  if(buildingCompSummary) buildingCompSummary.textContent=money(B);
+  document.getElementById('baseTotal').textContent=money(base);
+  document.getElementById('appealTotal').textContent=money(appealTotal);
+  document.getElementById('appealGain').textContent=
+    '추가 기대보상액 '+money(appealGain)+' · 누적 상승률 '+pct(cum);
+
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  [10,20,30,40].forEach(rate=>{
+    const incentive=B*rate/100;
+    const coopTotal=base+incentive;
+    const diff=appealTotal-coopTotal;
+    let cls='equal', text=signedEok(diff);
+    if(diff>0.000001){ cls='positive'; }
+    else if(diff<-0.000001){ cls='negative'; }
+
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${rate}%</td>
+      <td class="money">${money(incentive)}</td>
+      <td class="money">${money(coopTotal)}</td>
+      <td class="money">${money(appealTotal)}</td>
+      <td class="diff ${cls}">${text}</td>
+    `;
+    tbody.appendChild(tr);
+
+
+  });
+
+  // 협조장려금과 이의제기 금액 비교
+  const incentive40=B*0.40;
+  document.getElementById('appealGainBreak').textContent=money(appealGain);
+  document.getElementById('incentive40Break').textContent=money(incentive40);
+
+  const gap40=appealGain-incentive40;
+  const gap40El=document.getElementById('breakGap40');
+  gap40El.textContent=signedEok(gap40);
+  if(Math.abs(gap40)<0.000001){
+    gap40El.className='v equal';
+  }else if(gap40>0){
+    gap40El.className='v positive';
+  }else{
+    gap40El.className='v negative';
+  }
+
+  const breakBody=document.getElementById('breakEvenMoneyBody');
+  const resultCompareCards=document.getElementById('resultCompareCards');
+  breakBody.innerHTML='';
+  if(resultCompareCards) resultCompareCards.innerHTML='';
+  [10,20,30,40].forEach(rate=>{
+    const breakMoney=B*rate/100;
+    const gap=appealGain-breakMoney;
+    let cls='equal', text=signedEok(gap);
+    if(gap>0.000001){
+      cls='positive';
+    }else if(gap<-0.000001){
+      cls='negative';
+    }
+
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${rate}%</td>
+      <td>${money(breakMoney)}</td>
+      <td>${money(appealGain)}</td>
+      <td class="${cls}">${text}</td>
+    `;
+    breakBody.appendChild(tr);
+
+    if(resultCompareCards){
+      const item=document.createElement('div');
+      item.className='resultCompareItem';
+      item.innerHTML=`
+        <div class="top">
+          <div class="rate">장려금 ${rate}%와 비교</div>
+          <div class="diff ${cls}">${text}</div>
+        </div>
+        <div class="sub">협조장려금 ${money(breakMoney)} · 이의 추가보상 ${money(appealGain)}</div>
+      `;
+      resultCompareCards.appendChild(item);
+    }
+  });
+
+  const coop40=base+B*0.40;
+  const diff40=appealTotal-coop40;
+  const verdict=document.getElementById('finalVerdict');
+  const detail=document.getElementById('finalDetail');
+
+  if(Math.abs(diff40)<0.000001){
+    verdict.textContent='두 선택의 예상금액이 같음';
+    verdict.className='big equal';
+    detail.textContent='현재 입력값에서는 이의절차의 예상 추가보상액과 협조장려금 (40%)지급 가정이 같습니다.';
+  }else if(diff40>0){
+    verdict.textContent='이의절차 예상금액이 더 큼';
+    verdict.className='big positive';
+    detail.textContent='협조장려금 (40%)지급 가정과 비교하면 이의절차의 예상 추가보상액이 '+money(diff40)+' 더 큽니다.';
+  }else{
+    verdict.textContent='40% 협조장려금 예상금액이 더 큼';
+    verdict.className='big negative';
+    detail.textContent='이의절차의 예상 추가보상액과 비교하면 협조장려금 (40%)지급 가정이 '+money(Math.abs(diff40))+' 더 큽니다.';
+  }
+
+  [['c1','r1'],['c2','r2'],['c3','r3']].forEach(([cid,rid])=>{
+    const c=document.getElementById(cid);
+    const s=document.getElementById(rid);
+    if(c && s) s.disabled=!c.checked;
+  });
+}
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+document.querySelectorAll('input[type=checkbox]').forEach(el=>el.addEventListener('change',calc));
+calc();
+</script>
+</body>
+</html>
